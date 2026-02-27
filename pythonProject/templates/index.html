@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Форум{% endblock %}
+
+{% block content %}
+    <h1 style="margin-bottom: 25px; color: #2c3e50;">Добро пожаловать на форум!</h1>
+
+    {% if posts %}
+        {% for post in posts %}
+            <div style="border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 20px; border-radius: 10px; background-color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <h2 style="margin: 0;">
+                        <a href="{{ url_for('view_post', post_id=post.id) }}" style="color: #2c3e50; text-decoration: none;">
+                            {{ post.title }}
+                        </a>
+                    </h2>
+                    <a href="{{ url_for('like_post', post_id=post.id) }}"
+                       style="background-color: {% if post.likes|selectattr('user_id', 'equalto', session.user_id)|list|length > 0 %}#e74c3c{% else %}#95a5a6{% endif %};
+                              color: white; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 0.9em; display: flex; align-items: center; gap: 5px;">
+                        ❤️ {{ post.likes|length }}
+                    </a>
+                </div>
+                <p style="margin-bottom: 15px; color: #555; line-height: 1.6;">
+                    {{ post.content[:250] }}{% if post.content|length > 250 %}...{% endif %}
+                </p>
+                <div style="color: #7f8c8d; font-size: 0.95em; display: flex; justify-content: space-between; flex-wrap: wrap;">
+                    <span>👤 Автор: <strong>{{ post.author.username }}</strong></span>
+                    <span>📅 {{ post.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                    <span>💬 Комментариев: <strong>{{ post.comments|length }}</strong></span>
+                </div>
+
+                {% if session.user_id == post.user_id %}
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <a href="{{ url_for('edit_post', post_id=post.id) }}" style="color: #3498db; text-decoration: none; font-size: 0.9em;">✏️ Редактировать</a>
+                        <a href="{{ url_for('delete_post', post_id=post.id) }}" onclick="return confirm('Удалить пост?')" style="color: #e74c3c; text-decoration: none; font-size: 0.9em;">🗑️ Удалить</a>
+                    </div>
+                {% elif session.is_admin %}
+                    <div style="margin-top: 15px;">
+                        <a href="{{ url_for('delete_post', post_id=post.id) }}" onclick="return confirm('Удалить пост как администратор?')" style="color: #e74c3c; text-decoration: none; font-size: 0.9em;">🗑️ Удалить (админ)</a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; background-color: #f8f9fa; border-radius: 10px; border: 2px dashed #ddd;">
+            <h3 style="color: #95a5a6; margin-bottom: 15px;">Пока нет постов</h3>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">Будьте первым, кто создаст пост на этом форуме!</p>
+            {% if session.username %}
+                <a href="{{ url_for('create_post') }}" style="display: inline-block; padding: 10px 25px; background-color: #3498db; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Создать пост</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" style="display: inline-block; padding: 10px 25px; background-color: #2ecc71; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">Зарегистрироваться</a>
+                <a href="{{ url_for('login') }}" style="display: inline-block; padding: 10px 25px; background-color: #3498db; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Войти</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать комментарий - Форум{% endblock %}
+
+{% block content %}
+    <h1 style="margin-bottom: 25px; color: #2c3e50;">Редактировать комментарий</h1>
+
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+        <p style="color: #7f8c8d; margin-bottom: 10px;">К посту: <strong><a href="{{ url_for('view_post', post_id=comment.post.id) }}" style="color: #3498db;">{{ comment.post.title }}</a></strong></p>
+        <p style="color: #95a5a6; font-size: 0.9em;">Оригинальный комментарий: {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('edit_comment', comment_id=comment.id) }}">
+        <div style="margin-bottom: 25px;">
+            <label for="content" style="display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50;">Текст комментария:</label>
+            <textarea id="content" name="content" required rows="8" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1em; line-height: 1.6; resize: vertical;">{{ comment.content }}</textarea>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <button type="submit" style="padding: 14px 30px; background-color: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s;">
+                ✅ Сохранить изменения
+            </button>
+            <a href="{{ url_for('view_post', post_id=comment.post_id) }}" style="padding: 14px 30px; background-color: #95a5a6; color: white; text-decoration: none; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; text-align: center;">
+                ❌ Отмена
+            </a>
+        </div>
+    </form>
+{% endblock %}

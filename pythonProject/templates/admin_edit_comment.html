@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать комментарий - Админка{% endblock %}
+
+{% block content %}
+    <h1 style="margin-bottom: 25px; color: #e74c3c;">✏️ Редактировать комментарий (Администратор)</h1>
+    
+    <div style="background-color: #f8d7da; border: 2px solid #f5c6cb; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
+        <h3 style="color: #721c24; margin-bottom: 10px;">⚠️ Внимание!</h3>
+        <p style="color: #721c24;">
+            Вы редактируете чужой комментарий как администратор. 
+            <strong>Будьте осторожны и уважительны к автору!</strong>
+        </p>
+    </div>
+    
+    <div style="background-color: white; padding: 20px; border-radius: 10px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">Информация о комментарии</h3>
+        <div style="display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px;">
+            <strong>Автор:</strong>
+            <span>{% if comment.is_anonymous %}Аноним{% else %}{{ comment.author.username }}{% endif %}</span>
+            
+            <strong>Пост:</strong>
+            <span><a href="{{ url_for('view_post', post_id=comment.post_id) }}" style="color: #3498db;">{{ comment.post.title }}</a></span>
+            
+            <strong>Дата создания:</strong>
+            <span>{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            
+            {% if comment.updated_at %}
+            <strong>Последнее изменение:</strong>
+            <span>{{ comment.updated_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <form method="POST" action="{{ url_for('admin_edit_comment', comment_id=comment.id) }}">
+        <div style="margin-bottom: 25px;">
+            <label for="content" style="display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50;">Текст комментария:</label>
+            <textarea id="content" name="content" required rows="10" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1em; line-height: 1.6; resize: vertical;">{{ comment.content }}</textarea>
+            <p style="margin-top: 8px; color: #95a5a6; font-size: 0.9em;">
+                ⚠️ Изменения будут видны всем пользователям. Комментарий будет помечен как "Отредактировано администратором".
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 15px;">
+            <button type="submit" style="padding: 14px 30px; background-color: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s;">
+                ✅ Сохранить изменения
+            </button>
+            <a href="{{ url_for('admin_comments') }}" style="padding: 14px 30px; background-color: #95a5a6; color: white; text-decoration: none; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; text-align: center;">
+                ❌ Отмена
+            </a>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - Форум{% endblock %}
+
+{% block content %}
+    <h1 style="margin-bottom: 20px; color: #2c3e50;">{{ post.title }}</h1>
+
+    <div style="border: 1px solid #ddd; padding: 25px; margin-bottom: 25px; border-radius: 10px; background-color: #f9f9f9;">
+        <div style="margin-bottom: 15px;">
+            <p style="font-size: 1.1em; line-height: 1.7;">{{ post.content }}</p>
+        </div>
+        <div style="color: #7f8c8d; font-size: 0.95em; border-top: 1px solid #eee; padding-top: 15px;">
+            <p>
+                Автор: <strong>{{ post.author.username }}</strong> |
+                Дата: {{ post.created_at.strftime('%d.%m.%Y %H:%M') }}
+            </p>
+        </div>
+
+        {% if session.user_id == post.user_id %}
+            <div style="margin-top: 15px; text-align: right;">
+                <a href="{{ url_for('delete_post', post_id=post.id) }}" onclick="return confirm('Вы уверены, что хотите удалить этот пост?')" style="color: #e74c3c; text-decoration: none; font-weight: bold;">❌ Удалить пост</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <h2 style="margin-bottom: 20px; color: #2c3e50; display: flex; align-items: center;">
+        💬 Комментарии ({{ post.comments|length }})
+    </h2>
+
+    {% if post.comments %}
+        {% for comment in post.comments|sort(attribute='created_at') %}
+            <div class="comment-block" style="border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: white; position: relative;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <div>
+                        {% if comment.is_anonymous %}
+                            <strong style="color: #95a5a6;">Аноним</strong>
+                            <span class="anonymous-badge">Анонимно</span>
+                        {% else %}
+                            <strong style="color: #3498db;">{{ comment.author.username }}</strong>
+                        {% endif %}
+                    </div>
+                    <span style="color: #95a5a6; font-size: 0.9em;">
+                        {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}
+                        {% if comment.updated_at %}
+                            <span style="color: #f39c12; font-size: 0.8em;">(изменено)</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <p style="margin-bottom: 10px; line-height: 1.6;">{{ comment.content }}</p>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;">
+                    <div>
+                        {% if not comment.is_anonymous and session.user_id == comment.user_id %}
+                            <a href="{{ url_for('edit_comment', comment_id=comment.id) }}" style="color: #3498db; font-size: 0.9em; text-decoration: none; margin-right: 10px;">✏️ Редактировать</a>
+                            <a href="{{ url_for('delete_comment', comment_id=comment.id) }}" onclick="return confirm('Удалить комментарий?')" style="color: #e74c3c; font-size: 0.9em; text-decoration: none;">🗑️ Удалить</a>
+                        {% elif comment.is_anonymous and session.user_id == post.user_id %}
+                            <a href="{{ url_for('delete_comment', comment_id=comment.id) }}" onclick="return confirm('Удалить анонимный комментарий?')" style="color: #e74c3c; font-size: 0.9em; text-decoration: none;">🗑️ Удалить (автор поста)</a>
+                        {% elif session.is_admin %}
+                            <a href="{{ url_for('delete_comment', comment_id=comment.id) }}" onclick="return confirm('Удалить комментарий как администратор?')" style="color: #e74c3c; font-size: 0.9em; text-decoration: none;">🗑️ Удалить (админ)</a>
+                        {% endif %}
+                    </div>
+                    <button class="ai-btn" data-comment-id="{{ comment.id }}" style="background-color: #9b59b6; color: white; border: none; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        🤖 Спросить ИИ
+                    </button>
+                </div>
+
+                <!-- Место для ответа ИИ -->
+                <div class="ai-response" id="ai-response-{{ comment.id }}" style="margin-top: 15px; padding: 12px; background-color: #f8f9fa; border-left: 3px solid #9b59b6; border-radius: 0 6px 6px 0; display: none;">
+                    <div style="display: flex; align-items: start; gap: 10px;">
+                        <div style="background-color: #9b59b6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;">🤖</div>
+                        <div>
+                            <div style="font-weight: bold; color: #9b59b6; margin-bottom: 5px;">ИИ-ассистент</div>
+                            <div class="ai-response-content" id="ai-response-content-{{ comment.id }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 30px; background-color: #f8f9fa; border-radius: 8px; color: #95a5a6;">
+            <p>Пока нет комментариев. Будьте первым!</p>
+        </div>
+    {% endif %}
+
+    <h3 style="margin: 30px 0 15px; color: #2c3e50;">➕ Добавить комментарий</h3>
+
+    <form method="POST" action="{{ url_for('view_post', post_id=post.id) }}">
+        <div style="margin-bottom: 15px;">
+            <textarea name="content" required rows="5" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1em; resize: vertical;" placeholder="Напишите ваш комментарий..."></textarea>
+        </div>
+
+        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background-color: #f8f9fa; padding: 12px; border-radius: 6px;">
+            <input type="checkbox" id="is_anonymous" name="is_anonymous" style="width: 18px; height: 18px;">
+            <label for="is_anonymous" style="font-size: 0.95em; color: #2c3e50;">
+                Отправить анонимно <span style="color: #95a5a6; font-size: 0.9em;">(ваше имя не будет показано)</span>
+            </label>
+        </div>
+
+        <button type="submit" style="padding: 12px 25px; background-color: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: bold; transition: background-color 0.3s;">
+            Отправить комментарий
+        </button>
+
+        {% if not session.username %}
+            <p style="margin-top: 10px; color: #e67e22; font-size: 0.95em;">
+                <i>💡 Совет:</i> Вы можете <a href="{{ url_for('login') }}" style="color: #3498db; text-decoration: underline;">войти</a> или <a href="{{ url_for('register') }}" style="color: #2ecc71; text-decoration: underline;">зарегистрироваться</a> для сохранения профиля, либо оставить анонимный комментарий.
+            </p>
+        {% endif %}
+    </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик кнопки "Спросить ИИ"
+    document.querySelectorAll('.ai-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.getAttribute('data-comment-id');
+            const aiResponseBlock = document.getElementById('ai-response-' + commentId);
+            const aiResponseContent = document.getElementById('ai-response-content-' + commentId);
+            const buttonElement = this;
+
+            // Если ответ уже есть - скрываем/показываем
+            if (aiResponseBlock.style.display === 'block') {
+                aiResponseBlock.style.display = 'none';
+                buttonElement.innerHTML = '🤖 Спросить ИИ';
+                return;
+            }
+
+            // Меняем текст кнопки на "Думаю..."
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = '🤔 Думаю...';
+
+            // Отправляем запрос к серверу
+            fetch(`/ai_assistant/${commentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Показываем ответ ИИ
+                        aiResponseContent.innerHTML = data.response
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Жирный текст
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>');  // Курсив
+
+                        aiResponseBlock.style.display = 'block';
+                        buttonElement.innerHTML = '✅ ИИ ответил';
+
+                        // Прокручиваем к ответу ИИ
+                        aiResponseBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        alert('Ошибка при получении ответа ИИ');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Не удалось получить ответ от ИИ. Попробуйте позже.');
+                })
+                .finally(() => {
+                    buttonElement.disabled = false;
+                    // Через 3 секунды возвращаем исходный текст кнопки
+                    setTimeout(() => {
+                        if (aiResponseBlock.style.display === 'block') {
+                            buttonElement.innerHTML = '✅ ИИ ответил';
+                        } else {
+                            buttonElement.innerHTML = '🤖 Спросить ИИ';
+                        }
+                    }, 3000);
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

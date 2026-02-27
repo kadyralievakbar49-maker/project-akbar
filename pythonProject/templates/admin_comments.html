@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Админка - Комментарии{% endblock %}
+
+{% block content %}
+    <h1 style="margin-bottom: 25px; color: #e74c3c;">💬 Управление комментариями</h1>
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_panel') }}" style="padding: 10px 20px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 6px;">← Назад в админку</a>
+        <a href="{{ url_for('admin_users') }}" style="padding: 10px 20px; background-color: #3498db; color: white; text-decoration: none; border-radius: 6px;">👥 Пользователи</a>
+        <a href="{{ url_for('admin_posts') }}" style="padding: 10px 20px; background-color: #2ecc71; color: white; text-decoration: none; border-radius: 6px;">📝 Посты</a>
+    </div>
+    
+    <div style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        {% for comment in comments %}
+            <div style="padding: 15px; margin-bottom: 15px; border: 1px solid #eee; border-radius: 8px; background-color: #f9f9f9;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            {% if comment.is_anonymous %}
+                                <strong style="color: #95a5a6;">Аноним</strong>
+                                <span style="background-color: #95a5a6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">Анонимно</span>
+                            {% else %}
+                                <strong style="color: #3498db;">{{ comment.author.username }}</strong>
+                                {% if comment.edited_by_admin %}
+                                    <span style="background-color: #e74c3c; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">✏️ Отред. админом</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <p style="background-color: white; padding: 10px; border-radius: 6px; margin-bottom: 8px;">{{ comment.content }}</p>
+                        <div style="color: #7f8c8d; font-size: 0.9em; display: flex; gap: 15px; flex-wrap: wrap;">
+                            <span>📝 К посту: <strong><a href="{{ url_for('view_post', post_id=comment.post_id) }}" style="color: #2ecc71;">{{ comment.post.title }}</a></strong></span>
+                            <span>📅 {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                            {% if comment.updated_at %}
+                                <span style="color: #f39c12;">(изменено: {{ comment.updated_at.strftime('%d.%m.%Y %H:%M') }})</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px; min-width: 120px; align-items: flex-end;">
+                        <a href="{{ url_for('admin_edit_comment', comment_id=comment.id) }}" style="color: #3498db; text-decoration: none; font-size: 0.85em;">✏️ Редактировать</a>
+                        <a href="{{ url_for('admin_delete_comment', comment_id=comment.id) }}" 
+                           onclick="return confirm('Удалить комментарий?')" 
+                           style="color: #e74c3c; text-decoration: none; font-size: 0.85em;">🗑️ Удалить</a>
+                        <a href="{{ url_for('view_post', post_id=comment.post_id) }}" style="color: #95a5a6; text-decoration: none; font-size: 0.85em;">👁️ Посмотреть пост</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% if not comments %}
+            <div style="text-align: center; padding: 40px; color: #95a5a6;">
+                <p>Нет комментариев</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

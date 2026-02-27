@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Админка - Пользователи{% endblock %}
+
+{% block content %}
+    <h1 style="margin-bottom: 25px; color: #3498db;">👥 Управление пользователями</h1>
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_panel') }}" style="padding: 10px 20px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 6px;">← Назад в админку</a>
+        <a href="{{ url_for('admin_posts') }}" style="padding: 10px 20px; background-color: #2ecc71; color: white; text-decoration: none; border-radius: 6px;">📝 Посты</a>
+        <a href="{{ url_for('admin_comments') }}" style="padding: 10px 20px; background-color: #e74c3c; color: white; text-decoration: none; border-radius: 6px;">💬 Комментарии</a>
+    </div>
+    
+    <div style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background-color: #2c3e50; color: white;">
+                <tr>
+                    <th style="padding: 15px; text-align: left;">ID</th>
+                    <th style="padding: 15px; text-align: left;">Имя пользователя</th>
+                    <th style="padding: 15px; text-align: left;">Email</th>
+                    <th style="padding: 15px; text-align: left;">Регистрация</th>
+                    <th style="padding: 15px; text-align: left;">Постов</th>
+                    <th style="padding: 15px; text-align: left;">Комментариев</th>
+                    <th style="padding: 15px; text-align: left;">Статус</th>
+                    <th style="padding: 15px; text-align: left;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px;">{{ user.id }}</td>
+                    <td style="padding: 12px; font-weight: bold;">{{ user.username }}</td>
+                    <td style="padding: 12px;">{{ user.email }}</td>
+                    <td style="padding: 12px; color: #95a5a6;">{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+                    <td style="padding: 12px;">{{ user.posts|length }}</td>
+                    <td style="padding: 12px;">{{ user.comments|length }}</td>
+                    <td style="padding: 12px;">
+                        {% if user.is_admin %}
+                            <span style="background-color: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold;">👑 Админ</span>
+                        {% elif user.is_moderator %}
+                            <span style="background-color: #3498db; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold;">🛡️ Модератор</span>
+                        {% else %}
+                            <span style="background-color: #2ecc71; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">👤 Пользователь</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                            {% if not user.is_admin %}
+                                <a href="{{ url_for('make_admin', user_id=user.id) }}" 
+                                   onclick="return confirm('Сделать {{ user.username }} администратором?')" 
+                                   style="color: #e74c3c; text-decoration: none; font-size: 0.85em;">👑 Сделать админом</a>
+                            {% else %}
+                                {% if user.id != session.user_id %}
+                                    <a href="{{ url_for('remove_admin', user_id=user.id) }}" 
+                                       onclick="return confirm('Убрать права администратора у {{ user.username }}?')" 
+                                       style="color: #95a5a6; text-decoration: none; font-size: 0.85em;">❌ Убрать админа</a>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if not user.is_moderator and not user.is_admin %}
+                                <a href="{{ url_for('make_moderator', user_id=user.id) }}" 
+                                   onclick="return confirm('Сделать {{ user.username }} модератором?')" 
+                                   style="color: #3498db; text-decoration: none; font-size: 0.85em;">🛡️ Сделать модератором</a>
+                            {% elif user.is_moderator and not user.is_admin %}
+                                <a href="{{ url_for('remove_moderator', user_id=user.id) }}" 
+                                   onclick="return confirm('Убрать права модератора у {{ user.username }}?')" 
+                                   style="color: #95a5a6; text-decoration: none; font-size: 0.85em;">❌ Убрать модератора</a>
+                            {% endif %}
+                            
+                            {% if user.id != session.user_id %}
+                                <a href="{{ url_for('delete_user', user_id=user.id) }}" 
+                                   onclick="return confirm('Удалить пользователя {{ user.username }}? Все его посты и комментарии тоже будут удалены!')" 
+                                   style="color: #e74c3c; text-decoration: none; font-size: 0.85em;">🗑️ Удалить</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
